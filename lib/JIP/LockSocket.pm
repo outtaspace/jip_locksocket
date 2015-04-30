@@ -8,6 +8,53 @@ use English qw(-no_match_vars);
 
 our $VERSION = '0.01';
 
+sub new {
+    my ($class, %param) = @ARG;
+
+    # Mandatory options
+    croak qq{Mandatory argument "port" is missing\n}
+        unless exists $param{'port'};
+
+    # Check "port"
+    my $port = $param{'port'};
+    croak qq{Bad argument "port"\n}
+        unless defined $port and $port =~ m{^\d+$}x;
+
+    # Class to object
+    return bless({}, $class)->_set_port($port);
+}
+
+# Accessor
+sub get_port {
+    my $self = shift;
+    return $self->{'port'};
+}
+
+# Lock or raise an exception
+sub lock {}
+
+# Or just return undef
+sub try_lock {}
+
+# But trying to get a lock is ok
+sub is_locked {}
+
+# You can manually unlock
+sub unlock {}
+
+# unlocking on scope exit
+sub DESTROY {
+    my $self = shift;
+    return $self->unlock;
+}
+
+# private methods ...
+sub _set_port {
+    my ($self, $port) = @ARG;
+    $self->{'port'} = $port;
+    return $self;
+}
+
 1;
 
 __END__
@@ -23,6 +70,24 @@ Version 0.01
 =head1 SYNOPSIS
 
     use JIP::LockSocket;
+
+    my $port = 4242;
+
+    my $foo = JIP::LockSocket->new(port => $port);
+    my $wtf = JIP::LockSocket->new(port => $port);
+
+    $foo->lock;           # lock
+    eval { $wtf->lock; }; # or raise exception
+
+    # Can check its status in case you forgot
+    $foo->is_locked; # 1
+    $wtf->is_locked; # 0
+
+    $foo->lock; # Re-locking changes nothing
+
+    # But trying to get a lock is ok
+    $wtf->try_lock;  # 0
+    $wtf->is_locked; # 0
 
     # You can manually unlock
     $foo->unlock;
