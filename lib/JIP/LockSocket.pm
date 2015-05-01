@@ -21,17 +21,27 @@ sub new {
     croak qq{Bad argument "port"\n}
         unless defined $port and $port =~ m{^\d+$}x;
 
+    # Check "addr"
+    my $addr = (exists $param{'addr'} and length $param{'addr'})
+        ? $param{'addr'} : '127.0.0.1';
+
     # Class to object
     return bless({}, $class)
         ->_set_is_locked(0)
         ->_set_port($port)
+        ->_set_addr($addr)
         ->_set_socket(undef);
 }
 
-# Accessor
+# Accessors
 sub get_port {
     my $self = shift;
     return $self->{'port'};
+}
+
+sub get_addr {
+    my $self = shift;
+    return $self->{'addr'};
 }
 
 # Lock or raise an exception
@@ -107,8 +117,15 @@ sub _set_port {
     return $self;
 }
 
+sub _set_addr {
+    my ($self, $addr) = @ARG;
+    $self->{'addr'} = $addr;
+    return $self;
+}
+
 sub _get_inet_addr {
-    return inet_aton('127.0.0.1');
+    my $self = shift;
+    return inet_aton($self->get_addr);
 }
 
 sub _init_socket {
@@ -138,6 +155,9 @@ Version 0.01
 
     my $foo = JIP::LockSocket->new(port => $port);
     my $wtf = JIP::LockSocket->new(port => $port);
+
+    $foo->get_port; # required
+    $foo->get_addr; # defaults to 127.0.0.1
 
     $foo->lock;           # lock
     eval { $wtf->lock; }; # or raise exception

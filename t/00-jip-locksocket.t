@@ -23,7 +23,7 @@ subtest 'Require some module' => sub {
 };
 
 subtest 'new()' => sub {
-    plan tests => 7;
+    plan tests => 9;
 
     eval { JIP::LockSocket->new } or do {
         like $EVAL_ERROR, qr{Mandatory \s argument \s "port" \s is \s missing}x;
@@ -42,9 +42,12 @@ subtest 'new()' => sub {
 
     isa_ok $obj, 'JIP::LockSocket';
 
-    can_ok $obj, qw(new get_port lock try_lock unlock is_locked);
+    can_ok $obj, qw(new get_addr get_port lock try_lock unlock is_locked);
 
     is $obj->get_port, 4242;
+    is $obj->get_addr, '127.0.0.1';
+
+    is(JIP::LockSocket->new(port => 4242, addr => 'localhost')->get_addr, 'localhost');
 };
 
 subtest 'not is_locked at startup' => sub {
