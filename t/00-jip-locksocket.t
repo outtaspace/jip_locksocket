@@ -6,7 +6,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use English qw(-no_match_vars);
 
-plan tests => 2;
+plan tests => 9;
 
 subtest 'Require some module' => sub {
     plan tests => 2;
@@ -45,6 +45,74 @@ subtest 'new()' => sub {
     can_ok $obj, qw(new get_port lock try_lock unlock is_locked);
 
     is $obj->get_port, 4242;
+};
+
+subtest 'not is_locked at startup' => sub {
+    plan tests => 1;
+
+    cmp_ok init_obj()->is_locked, q{==}, 0;
+};
+
+subtest 'unlock on non-is_locked changes nothing' => sub {
+    plan tests => 2;
+
+    is ref(init_obj()->unlock), 'JIP::LockSocket';
+    cmp_ok init_obj()->is_locked, q{==}, 0;
+};
+
+subtest 'lock()' => sub {
+    plan tests => 4;
+
+    my $obj = init_obj();
+
+    is ref($obj->lock), 'JIP::LockSocket';
+    cmp_ok $obj->is_locked, q{==}, 1;
+
+    # Re-locking changes nothing
+    is ref($obj->lock), 'JIP::LockSocket';
+    cmp_ok $obj->is_locked, q{==}, 1;
+};
+
+subtest 'unlock()' => sub {
+    plan tests => 1;
+
+    my $obj = init_obj()->lock;
+
+    $obj->unlock;
+
+    cmp_ok $obj->is_locked, q{==}, 0;
+};
+
+subtest 'unlocking on scope exit' => sub {
+    plan tests => 1;
+
+    {
+        init_obj()->lock;
+    }
+
+    cmp_ok init_obj()->lock->is_locked, q{==}, 1;
+};
+
+subtest 'Lock or raise an exception' => sub {
+    plan tests => 1;
+
+    my $obj = init_obj()->lock;
+
+    eval { init_obj()->lock } or do {
+        like $EVAL_ERROR, qr{^Can't \s lock \s port \s "4242":}x;
+    };
+};
+
+subtest 'try_lock()' => sub {
+    plan tests => 2;
+
+    my $obj = init_obj()->try_lock;
+
+    # Re-locking changes nothing
+    cmp_ok $obj->try_lock->is_locked, q{==}, 1;
+
+    # Or just return undef
+    is(init_obj()->try_lock, undef);
 };
 
 sub init_obj {

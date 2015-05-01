@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use Carp qw(croak);
 use English qw(-no_match_vars);
+use Socket qw(inet_aton pack_sockaddr_in PF_INET SOCK_STREAM);
 
 our $VERSION = '0.01';
 
@@ -21,7 +22,10 @@ sub new {
         unless defined $port and $port =~ m{^\d+$}x;
 
     # Class to object
-    return bless({}, $class)->_set_port($port);
+    return bless({}, $class)
+        ->_set_is_locked(0)
+        ->_set_port($port)
+        ->_set_socket(undef);
 }
 
 # Accessor
@@ -31,16 +35,52 @@ sub get_port {
 }
 
 # Lock or raise an exception
-sub lock {}
+sub lock {
+    my $self = shift;
+
+    # Re-locking changes nothing
+    return $self if $self->is_locked;
+
+    my $socket = $self->_init_socket;
+
+    bind($socket, pack_sockaddr_in($self->get_port, $self->_get_inet_addr))
+        or croak(sprintf qq{Can't lock port "%s": %s\n}, $self->get_port, $OS_ERROR);
+
+    return $self->_set_socket($socket)->_set_is_locked(1);
+}
 
 # Or just return undef
-sub try_lock {}
+sub try_lock {
+    my $self = shift;
+
+    # Re-locking changes nothing
+    return $self if $self->is_locked;
+
+    my $socket = $self->_init_socket;
+
+    if (bind($socket, pack_sockaddr_in($self->get_port, $self->_get_inet_addr))) {
+        return $self->_set_socket($socket)->_set_is_locked(1);
+    }
+    else {
+        return;
+    }
+}
 
 # But trying to get a lock is ok
-sub is_locked {}
+sub is_locked {
+    my $self = shift;
+    return $self->{'is_locked'};
+}
 
 # You can manually unlock
-sub unlock {}
+sub unlock {
+    my $self = shift;
+
+    # Re-unlocking changes nothing
+    return $self if not $self->is_locked;
+
+    return $self->_set_socket(undef)->_set_is_locked(0);
+}
 
 # unlocking on scope exit
 sub DESTROY {
@@ -49,10 +89,33 @@ sub DESTROY {
 }
 
 # private methods ...
+sub _set_is_locked {
+    my ($self, $is_locked) = @ARG;
+    $self->{'is_locked'} = $is_locked;
+    return $self;
+}
+
+sub _set_socket {
+    my ($self, $port) = @ARG;
+    $self->{'socket'} = $port;
+    return $self;
+}
+
 sub _set_port {
     my ($self, $port) = @ARG;
     $self->{'port'} = $port;
     return $self;
+}
+
+sub _get_inet_addr {
+    return inet_aton('127.0.0.1');
+}
+
+sub _init_socket {
+    socket(my $socket, PF_INET, SOCK_STREAM, getprotobyname('tcp'))
+        or croak(sprintf qq{Can't init socket: %s\n}, $OS_ERROR);
+
+    return $socket;
 }
 
 1;
