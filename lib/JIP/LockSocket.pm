@@ -3,11 +3,14 @@ package JIP::LockSocket;
 use 5.006;
 use strict;
 use warnings;
+use JIP::ClassField;
 use Carp qw(croak);
 use English qw(-no_match_vars);
 use Socket qw(inet_aton pack_sockaddr_in PF_INET SOCK_STREAM);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
+
+map { has $_ => (get => '+', set => '-') } qw(port addr socket is_locked);
 
 sub new {
     my ($class, %param) = @ARG;
@@ -33,17 +36,6 @@ sub new {
         ->_set_socket(undef);
 }
 
-# Accessors
-sub get_port {
-    my $self = shift;
-    return $self->{'port'};
-}
-
-sub get_addr {
-    my $self = shift;
-    return $self->{'addr'};
-}
-
 # Lock or raise an exception
 sub lock {
     my $self = shift;
@@ -53,8 +45,8 @@ sub lock {
 
     my $socket = $self->_init_socket;
 
-    bind($socket, pack_sockaddr_in($self->get_port, $self->_get_inet_addr))
-        or croak(sprintf qq{Can't lock port "%s": %s\n}, $self->get_port, $OS_ERROR);
+    bind($socket, pack_sockaddr_in($self->port, $self->_get_inet_addr))
+        or croak(sprintf qq{Can't lock port "%s": %s\n}, $self->port, $OS_ERROR);
 
     return $self->_set_socket($socket)->_set_is_locked(1);
 }
@@ -68,18 +60,12 @@ sub try_lock {
 
     my $socket = $self->_init_socket;
 
-    if (bind($socket, pack_sockaddr_in($self->get_port, $self->_get_inet_addr))) {
+    if (bind($socket, pack_sockaddr_in($self->port, $self->_get_inet_addr))) {
         return $self->_set_socket($socket)->_set_is_locked(1);
     }
     else {
         return;
     }
-}
-
-# But trying to get a lock is ok
-sub is_locked {
-    my $self = shift;
-    return $self->{'is_locked'};
 }
 
 # You can manually unlock
@@ -98,34 +84,9 @@ sub DESTROY {
     return $self->unlock;
 }
 
-# private methods ...
-sub _set_is_locked {
-    my ($self, $is_locked) = @ARG;
-    $self->{'is_locked'} = $is_locked;
-    return $self;
-}
-
-sub _set_socket {
-    my ($self, $port) = @ARG;
-    $self->{'socket'} = $port;
-    return $self;
-}
-
-sub _set_port {
-    my ($self, $port) = @ARG;
-    $self->{'port'} = $port;
-    return $self;
-}
-
-sub _set_addr {
-    my ($self, $addr) = @ARG;
-    $self->{'addr'} = $addr;
-    return $self;
-}
-
 sub _get_inet_addr {
     my $self = shift;
-    return inet_aton($self->get_addr);
+    return inet_aton($self->addr);
 }
 
 sub _init_socket {
@@ -156,8 +117,8 @@ Version 0.01
     my $foo = JIP::LockSocket->new(port => $port);
     my $wtf = JIP::LockSocket->new(port => $port);
 
-    $foo->get_port; # required
-    $foo->get_addr; # defaults to 127.0.0.1
+    $foo->port; # required
+    $foo->addr; # defaults to 127.0.0.1
 
     $foo->lock;           # lock
     eval { $wtf->lock; }; # or raise exception

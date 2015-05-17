@@ -42,12 +42,12 @@ subtest 'new()' => sub {
 
     isa_ok $obj, 'JIP::LockSocket';
 
-    can_ok $obj, qw(new get_addr get_port lock try_lock unlock is_locked);
+    can_ok $obj, qw(new addr port lock try_lock unlock is_locked);
 
-    is $obj->get_port, 4242;
-    is $obj->get_addr, '127.0.0.1';
+    is $obj->port, 4242;
+    is $obj->addr, '127.0.0.1';
 
-    is(JIP::LockSocket->new(port => 4242, addr => 'localhost')->get_addr, 'localhost');
+    is(JIP::LockSocket->new(port => 4242, addr => 'localhost')->addr, 'localhost');
 };
 
 subtest 'not is_locked at startup' => sub {
