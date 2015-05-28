@@ -142,6 +142,10 @@ Version 0.01
     # ... or unlocking is automatic on scope exit
     undef $foo;
 
+=head1 SEE ALSO
+
+Lock::File, Lock::Socket and JIP::LockFile
+
 =head1 AUTHOR
 
 Vladimir Zhavoronkov, C<< <flyweight at yandex.ru> >>

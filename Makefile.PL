@@ -22,7 +22,7 @@ WriteMakefile(
         'Carp'            => 0,
         'Socket'          => 0,
         'English'         => 0,
-        'JIP::ClassField' => '0.01',
+        'JIP::ClassField' => '0.03',
     },
     dist  => {COMPRESS => 'gzip -9f', SUFFIX => 'gz'},
     clean => {FILES => 'JIP-LockSocket-*'},
