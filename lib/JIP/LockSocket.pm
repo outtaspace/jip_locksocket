@@ -16,12 +16,12 @@ sub new {
     my ($class, %param) = @ARG;
 
     # Mandatory options
-    croak qq{Mandatory argument "port" is missing\n}
+    croak q{Mandatory argument "port" is missing}
         unless exists $param{'port'};
 
     # Check "port"
     my $port = $param{'port'};
-    croak qq{Bad argument "port"\n}
+    croak q{Bad argument "port"}
         unless defined $port and $port =~ m{^\d+$}x;
 
     # Check "addr"
@@ -46,7 +46,7 @@ sub lock {
     my $socket = $self->_init_socket;
 
     bind($socket, pack_sockaddr_in($self->port, $self->_get_inet_addr))
-        or croak(sprintf qq{Can't lock port "%s": %s\n}, $self->port, $OS_ERROR);
+        or croak(sprintf q{Can't lock port "%s": %s}, $self->port, $OS_ERROR);
 
     return $self->_set_socket($socket)->_set_is_locked(1);
 }
@@ -91,7 +91,7 @@ sub _get_inet_addr {
 
 sub _init_socket {
     socket(my $socket, PF_INET, SOCK_STREAM, getprotobyname('tcp'))
-        or croak(sprintf qq{Can't init socket: %s\n}, $OS_ERROR);
+        or croak(sprintf q{Can't init socket: %s}, $OS_ERROR);
 
     return $socket;
 }
