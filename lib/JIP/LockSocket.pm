@@ -3,14 +3,14 @@ package JIP::LockSocket;
 use 5.006;
 use strict;
 use warnings;
-use JIP::ClassField;
+use JIP::ClassField 0.05;
 use Carp qw(croak);
 use English qw(-no_match_vars);
 use Socket qw(inet_aton pack_sockaddr_in PF_INET SOCK_STREAM);
 
 our $VERSION = '0.02';
 
-map { has $_ => (get => '+', set => '-') } qw(port addr socket is_locked);
+has [qw(port addr socket is_locked)] => (get => q{+}, set => q{-});
 
 sub new {
     my ($class, %param) = @ARG;
