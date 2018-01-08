@@ -8,7 +8,7 @@ use Carp qw(croak);
 use English qw(-no_match_vars);
 use Socket qw(inet_aton pack_sockaddr_in PF_INET SOCK_STREAM);
 
-our $VERSION = '0.02';
+our $VERSION = '0.021';
 
 has [qw(port addr socket is_locked)] => (get => q{+}, set => q{-});
 
@@ -106,7 +106,7 @@ JIP::LockSocket - application lock/mutex based on sockets
 
 =head1 VERSION
 
-This document describes C<JIP::LockSocket> version C<0.02>.
+This document describes C<JIP::LockSocket> version C<0.021>.
 
 =head1 SYNOPSIS
 
